@@ -26,7 +26,7 @@ jobs:
         DEPLOY_BRANCH=srceng-old-port COMMIT=$(git rev-parse HEAD) scripts/workflow.sh
 
     - name: Upload files
-      uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v2
       with:
          name: debug
          path: bin/srceng-debug.apk
