@@ -21,7 +21,6 @@ generate_resources()
 	echo '</resources>' >> $RES
 }
 
-build jni/src/tierhook libtierhook.so
 
 cd srcsdk/
 build main libmain.so
