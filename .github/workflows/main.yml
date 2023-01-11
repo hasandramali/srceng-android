@@ -2,9 +2,9 @@ name: Build android package
 
 on:
   push:
-    branches: [ master ]
+    branches: [ android-fixes ]
   pull_request:
-    branches: [ master ]
+    branches: [ android-fixes ]
 
 jobs:
   build:
@@ -25,8 +25,8 @@ jobs:
         cd ../
         DEPLOY_BRANCH=srceng-old-port COMMIT=$(git rev-parse HEAD) scripts/workflow.sh
 
-    - uses: actions/upload-artifact@v2
     - name: Upload artifacts
+      uses: actions/upload-artifact@v2
       with:
           name: compiled-debug
           path: bin/srceng-debug.apk
