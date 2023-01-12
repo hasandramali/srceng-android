@@ -21,14 +21,6 @@ generate_resources()
 	echo '</resources>' >> $RES
 }
 
-
-cd srcsdk/
-build main libmain.so
-build gl4es libRegal.so
-build vinterface_wrapper/client libclient.so
-build vinterface_wrapper/server libserver.so
-cd ../
-
 generate_resources
 
 mkdir $HOME/.android
