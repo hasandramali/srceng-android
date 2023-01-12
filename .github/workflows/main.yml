@@ -6,7 +6,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Build
@@ -21,5 +20,5 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
-          name: compiled-debug
-          path: bin/srceng-debug.apk
+          name: compiled-release
+          path: bin/srceng-release.apk
