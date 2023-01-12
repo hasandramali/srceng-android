@@ -20,5 +20,5 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v2
       with:
-          name: compiled-release
-          path: bin/srceng-release-unsigned.apk
+          name: compiled-debug
+          path: bin/srceng-debug.apk
