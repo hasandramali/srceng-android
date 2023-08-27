@@ -15,6 +15,12 @@ jobs:
         sudo pip3 install websocket-client
         git clone --depth 1 https://gitlab.com/LostGamer/ndk-binaries
         git clone --depth 1 https://gitlab.com/LostGamer/android-sdk
+        cd libs/armeabi-v7a
+        wget https://github.com/hasandramali/srceng-android/releases/download/v1.0/hl2libs.tar.gz
+        tar -xf hl2libs.tar.gz
+        cp -r libs/* .
+        rm -rf hl2libs.tar.gz libs
+        cd ../../
         DEPLOY_BRANCH=srceng-old-port COMMIT=$(git rev-parse HEAD) scripts/workflow.sh
 
     - name: Upload artifacts
