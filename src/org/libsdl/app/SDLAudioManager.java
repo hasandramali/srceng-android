@@ -1,354 +1,35 @@
+/*
+ * Decompiled with CFR 0.0.
+ * 
+ * Could not load the following classes:
+ *  android.media.AudioRecord
+ *  android.media.AudioTrack
+ *  android.os.Build
+ *  android.os.Build$VERSION
+ *  android.os.Process
+ *  android.util.Log
+ *  java.lang.Exception
+ *  java.lang.Integer
+ *  java.lang.InterruptedException
+ *  java.lang.Math
+ *  java.lang.Object
+ *  java.lang.String
+ *  java.lang.StringBuilder
+ *  java.lang.Thread
+ */
 package org.libsdl.app;
 
-import android.media.AudioFormat;
-import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
-import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.Process;
 import android.util.Log;
 
-public class SDLAudioManager
-{
+public class SDLAudioManager {
     protected static final String TAG = "SDLAudio";
-
-    protected static AudioTrack mAudioTrack;
     protected static AudioRecord mAudioRecord;
+    protected static AudioTrack mAudioTrack;
 
-    public static void initialize() {
-        mAudioTrack = null;
-        mAudioRecord = null;
-    }
-
-    // Audio
-
-    protected static String getAudioFormatString(int audioFormat) {
-        switch (audioFormat) {
-        case AudioFormat.ENCODING_PCM_8BIT:
-            return "8-bit";
-        case AudioFormat.ENCODING_PCM_16BIT:
-            return "16-bit";
-        case AudioFormat.ENCODING_PCM_FLOAT:
-            return "float";
-        default:
-            return Integer.toString(audioFormat);
-        }
-    }
-
-    protected static int[] open(boolean isCapture, int sampleRate, int audioFormat, int desiredChannels, int desiredFrames) {
-        int channelConfig;
-        int sampleSize;
-        int frameSize;
-
-        Log.v(TAG, "Opening " + (isCapture ? "capture" : "playback") + ", requested " + desiredFrames + " frames of " + desiredChannels + " channel " + getAudioFormatString(audioFormat) + " audio at " + sampleRate + " Hz");
-
-        /* On older devices let's use known good settings */
-        if (Build.VERSION.SDK_INT < 21) {
-            if (desiredChannels > 2) {
-                desiredChannels = 2;
-            }
-            if (sampleRate < 8000) {
-                sampleRate = 8000;
-            } else if (sampleRate > 48000) {
-                sampleRate = 48000;
-            }
-        }
-
-        if (audioFormat == AudioFormat.ENCODING_PCM_FLOAT) {
-            int minSDKVersion = (isCapture ? 23 : 21);
-            if (Build.VERSION.SDK_INT < minSDKVersion) {
-                audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-            }
-        }
-        switch (audioFormat)
-        {
-        case AudioFormat.ENCODING_PCM_8BIT:
-            sampleSize = 1;
-            break;
-        case AudioFormat.ENCODING_PCM_16BIT:
-            sampleSize = 2;
-            break;
-        case AudioFormat.ENCODING_PCM_FLOAT:
-            sampleSize = 4;
-            break;
-        default:
-            Log.v(TAG, "Requested format " + audioFormat + ", getting ENCODING_PCM_16BIT");
-            audioFormat = AudioFormat.ENCODING_PCM_16BIT;
-            sampleSize = 2;
-            break;
-        }
-
-        if (isCapture) {
-            switch (desiredChannels) {
-            case 1:
-                channelConfig = AudioFormat.CHANNEL_IN_MONO;
-                break;
-            case 2:
-                channelConfig = AudioFormat.CHANNEL_IN_STEREO;
-                break;
-            default:
-                Log.v(TAG, "Requested " + desiredChannels + " channels, getting stereo");
-                desiredChannels = 2;
-                channelConfig = AudioFormat.CHANNEL_IN_STEREO;
-                break;
-            }
-        } else {
-            switch (desiredChannels) {
-            case 1:
-                channelConfig = AudioFormat.CHANNEL_OUT_MONO;
-                break;
-            case 2:
-                channelConfig = AudioFormat.CHANNEL_OUT_STEREO;
-                break;
-            case 3:
-                channelConfig = AudioFormat.CHANNEL_OUT_STEREO | AudioFormat.CHANNEL_OUT_FRONT_CENTER;
-                break;
-            case 4:
-                channelConfig = AudioFormat.CHANNEL_OUT_QUAD;
-                break;
-            case 5:
-                channelConfig = AudioFormat.CHANNEL_OUT_QUAD | AudioFormat.CHANNEL_OUT_FRONT_CENTER;
-                break;
-            case 6:
-                channelConfig = AudioFormat.CHANNEL_OUT_5POINT1;
-                break;
-            case 7:
-                channelConfig = AudioFormat.CHANNEL_OUT_5POINT1 | AudioFormat.CHANNEL_OUT_BACK_CENTER;
-                break;
-            case 8:
-                if (Build.VERSION.SDK_INT >= 23) {
-                    channelConfig = AudioFormat.CHANNEL_OUT_7POINT1_SURROUND;
-                } else {
-                    Log.v(TAG, "Requested " + desiredChannels + " channels, getting 5.1 surround");
-                    desiredChannels = 6;
-                    channelConfig = AudioFormat.CHANNEL_OUT_5POINT1;
-                }
-                break;
-            default:
-                Log.v(TAG, "Requested " + desiredChannels + " channels, getting stereo");
-                desiredChannels = 2;
-                channelConfig = AudioFormat.CHANNEL_OUT_STEREO;
-                break;
-            }
-
-/*
-            Log.v(TAG, "Speaker configuration (and order of channels):");
-            if ((channelConfig & 0x00000004) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_FRONT_LEFT");
-            }
-            if ((channelConfig & 0x00000008) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_FRONT_RIGHT");
-            }
-            if ((channelConfig & 0x00000010) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_FRONT_CENTER");
-            }
-            if ((channelConfig & 0x00000020) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_LOW_FREQUENCY");
-            }
-            if ((channelConfig & 0x00000040) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_BACK_LEFT");
-            }
-            if ((channelConfig & 0x00000080) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_BACK_RIGHT");
-            }
-            if ((channelConfig & 0x00000100) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_FRONT_LEFT_OF_CENTER");
-            }
-            if ((channelConfig & 0x00000200) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_FRONT_RIGHT_OF_CENTER");
-            }
-            if ((channelConfig & 0x00000400) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_BACK_CENTER");
-            }
-            if ((channelConfig & 0x00000800) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_SIDE_LEFT");
-            }
-            if ((channelConfig & 0x00001000) != 0) {
-                Log.v(TAG, "   CHANNEL_OUT_SIDE_RIGHT");
-            }
-*/
-        }
-        frameSize = (sampleSize * desiredChannels);
-
-        // Let the user pick a larger buffer if they really want -- but ye
-        // gods they probably shouldn't, the minimums are horrifyingly high
-        // latency already
-        int minBufferSize;
-        if (isCapture) {
-            minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-        } else {
-            minBufferSize = AudioTrack.getMinBufferSize(sampleRate, channelConfig, audioFormat);
-        }
-        desiredFrames = Math.max(desiredFrames, (minBufferSize + frameSize - 1) / frameSize);
-
-        int[] results = new int[4];
-
-        if (isCapture) {
-            if (mAudioRecord == null) {
-                mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.DEFAULT, sampleRate,
-                        channelConfig, audioFormat, desiredFrames * frameSize);
-
-                // see notes about AudioTrack state in audioOpen(), above. Probably also applies here.
-                if (mAudioRecord.getState() != AudioRecord.STATE_INITIALIZED) {
-                    Log.e(TAG, "Failed during initialization of AudioRecord");
-                    mAudioRecord.release();
-                    mAudioRecord = null;
-                    return null;
-                }
-
-                mAudioRecord.startRecording();
-            }
-
-            results[0] = mAudioRecord.getSampleRate();
-            results[1] = mAudioRecord.getAudioFormat();
-            results[2] = mAudioRecord.getChannelCount();
-
-        } else {
-            if (mAudioTrack == null) {
-                mAudioTrack = new AudioTrack(AudioManager.STREAM_MUSIC, sampleRate, channelConfig, audioFormat, desiredFrames * frameSize, AudioTrack.MODE_STREAM);
-
-                // Instantiating AudioTrack can "succeed" without an exception and the track may still be invalid
-                // Ref: https://android.googlesource.com/platform/frameworks/base/+/refs/heads/master/media/java/android/media/AudioTrack.java
-                // Ref: http://developer.android.com/reference/android/media/AudioTrack.html#getState()
-                if (mAudioTrack.getState() != AudioTrack.STATE_INITIALIZED) {
-                    /* Try again, with safer values */
-
-                    Log.e(TAG, "Failed during initialization of Audio Track");
-                    mAudioTrack.release();
-                    mAudioTrack = null;
-                    return null;
-                }
-
-                mAudioTrack.play();
-            }
-
-            results[0] = mAudioTrack.getSampleRate();
-            results[1] = mAudioTrack.getAudioFormat();
-            results[2] = mAudioTrack.getChannelCount();
-        }
-        results[3] = desiredFrames;
-
-        Log.v(TAG, "Opening " + (isCapture ? "capture" : "playback") + ", got " + results[3] + " frames of " + results[2] + " channel " + getAudioFormatString(results[1]) + " audio at " + results[0] + " Hz");
-
-        return results;
-    }
-
-    /**
-     * This method is called by SDL using JNI.
-     */
-    public static int[] audioOpen(int sampleRate, int audioFormat, int desiredChannels, int desiredFrames) {
-        return open(false, sampleRate, audioFormat, desiredChannels, desiredFrames);
-    }
-
-    /**
-     * This method is called by SDL using JNI.
-     */
-    public static void audioWriteFloatBuffer(float[] buffer) {
-        if (mAudioTrack == null) {
-            Log.e(TAG, "Attempted to make audio call with uninitialized audio!");
-            return;
-        }
-
-        for (int i = 0; i < buffer.length;) {
-            int result = mAudioTrack.write(buffer, i, buffer.length - i, AudioTrack.WRITE_BLOCKING);
-            if (result > 0) {
-                i += result;
-            } else if (result == 0) {
-                try {
-                    Thread.sleep(1);
-                } catch(InterruptedException e) {
-                    // Nom nom
-                }
-            } else {
-                Log.w(TAG, "SDL audio: error return from write(float)");
-                return;
-            }
-        }
-    }
-
-    /**
-     * This method is called by SDL using JNI.
-     */
-    public static void audioWriteShortBuffer(short[] buffer) {
-        if (mAudioTrack == null) {
-            Log.e(TAG, "Attempted to make audio call with uninitialized audio!");
-            return;
-        }
-
-        for (int i = 0; i < buffer.length;) {
-            int result = mAudioTrack.write(buffer, i, buffer.length - i);
-            if (result > 0) {
-                i += result;
-            } else if (result == 0) {
-                try {
-                    Thread.sleep(1);
-                } catch(InterruptedException e) {
-                    // Nom nom
-                }
-            } else {
-                Log.w(TAG, "SDL audio: error return from write(short)");
-                return;
-            }
-        }
-    }
-
-    /**
-     * This method is called by SDL using JNI.
-     */
-    public static void audioWriteByteBuffer(byte[] buffer) {
-        if (mAudioTrack == null) {
-            Log.e(TAG, "Attempted to make audio call with uninitialized audio!");
-            return;
-        }
-
-        for (int i = 0; i < buffer.length; ) {
-            int result = mAudioTrack.write(buffer, i, buffer.length - i);
-            if (result > 0) {
-                i += result;
-            } else if (result == 0) {
-                try {
-                    Thread.sleep(1);
-                } catch(InterruptedException e) {
-                    // Nom nom
-                }
-            } else {
-                Log.w(TAG, "SDL audio: error return from write(byte)");
-                return;
-            }
-        }
-    }
-
-    /**
-     * This method is called by SDL using JNI.
-     */
-    public static int[] captureOpen(int sampleRate, int audioFormat, int desiredChannels, int desiredFrames) {
-        return open(true, sampleRate, audioFormat, desiredChannels, desiredFrames);
-    }
-
-    /** This method is called by SDL using JNI. */
-    public static int captureReadFloatBuffer(float[] buffer, boolean blocking) {
-        return mAudioRecord.read(buffer, 0, buffer.length, blocking ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
-    }
-
-    /** This method is called by SDL using JNI. */
-    public static int captureReadShortBuffer(short[] buffer, boolean blocking) {
-        if (Build.VERSION.SDK_INT < 23) {
-            return mAudioRecord.read(buffer, 0, buffer.length);
-        } else {
-            return mAudioRecord.read(buffer, 0, buffer.length, blocking ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
-        }
-    }
-
-    /** This method is called by SDL using JNI. */
-    public static int captureReadByteBuffer(byte[] buffer, boolean blocking) {
-        if (Build.VERSION.SDK_INT < 23) {
-            return mAudioRecord.read(buffer, 0, buffer.length);
-        } else {
-            return mAudioRecord.read(buffer, 0, buffer.length, blocking ? AudioRecord.READ_BLOCKING : AudioRecord.READ_NON_BLOCKING);
-        }
-    }
-
-    /** This method is called by SDL using JNI. */
     public static void audioClose() {
         if (mAudioTrack != null) {
             mAudioTrack.stop();
@@ -357,7 +38,131 @@ public class SDLAudioManager
         }
     }
 
-    /** This method is called by SDL using JNI. */
+    public static int[] audioOpen(int n, int n2, int n3, int n4) {
+        return SDLAudioManager.open(false, n, n2, n3, n4);
+    }
+
+    /*
+     * Unable to fully structure code
+     * Enabled aggressive block sorting
+     * Enabled unnecessary exception pruning
+     * Enabled aggressive exception aggregation
+     * Lifted jumps to return sites
+     */
+    public static void audioSetThreadPriority(boolean var0, int var1_1) {
+        if (!var0) ** GOTO lbl5
+        try {
+            block2 : {
+                Thread.currentThread().setName("SDLAudioC" + var1_1);
+                break block2;
+lbl5: // 1 sources:
+                Thread.currentThread().setName("SDLAudioP" + var1_1);
+            }
+            Process.setThreadPriority((int)-16);
+            return;
+        }
+        catch (Exception var2_2) {
+            Log.v((String)"SDLAudio", (String)("modify thread properties failed " + var2_2.toString()));
+            return;
+        }
+    }
+
+    /*
+     * Enabled aggressive block sorting
+     * Enabled unnecessary exception pruning
+     * Enabled aggressive exception aggregation
+     */
+    public static void audioWriteByteBuffer(byte[] arrby) {
+        if (mAudioTrack == null) {
+            Log.e((String)TAG, (String)"Attempted to make audio call with uninitialized audio!");
+            return;
+        }
+        int n = 0;
+        while (n < arrby.length) {
+            int n2 = mAudioTrack.write(arrby, n, arrby.length - n);
+            if (n2 > 0) {
+                n += n2;
+                continue;
+            }
+            if (n2 != 0) {
+                Log.w((String)TAG, (String)"SDL audio: error return from write(byte)");
+                return;
+            }
+            try {
+                Thread.sleep((long)1L);
+            }
+            catch (InterruptedException interruptedException) {
+                continue;
+            }
+            break;
+        }
+        return;
+    }
+
+    /*
+     * Enabled aggressive block sorting
+     * Enabled unnecessary exception pruning
+     * Enabled aggressive exception aggregation
+     */
+    public static void audioWriteFloatBuffer(float[] arrf) {
+        if (mAudioTrack == null) {
+            Log.e((String)TAG, (String)"Attempted to make audio call with uninitialized audio!");
+            return;
+        }
+        int n = 0;
+        while (n < arrf.length) {
+            int n2 = mAudioTrack.write(arrf, n, arrf.length - n, 0);
+            if (n2 > 0) {
+                n += n2;
+                continue;
+            }
+            if (n2 != 0) {
+                Log.w((String)TAG, (String)"SDL audio: error return from write(float)");
+                return;
+            }
+            try {
+                Thread.sleep((long)1L);
+            }
+            catch (InterruptedException interruptedException) {
+                continue;
+            }
+            break;
+        }
+        return;
+    }
+
+    /*
+     * Enabled aggressive block sorting
+     * Enabled unnecessary exception pruning
+     * Enabled aggressive exception aggregation
+     */
+    public static void audioWriteShortBuffer(short[] arrs) {
+        if (mAudioTrack == null) {
+            Log.e((String)TAG, (String)"Attempted to make audio call with uninitialized audio!");
+            return;
+        }
+        int n = 0;
+        while (n < arrs.length) {
+            int n2 = mAudioTrack.write(arrs, n, arrs.length - n);
+            if (n2 > 0) {
+                n += n2;
+                continue;
+            }
+            if (n2 != 0) {
+                Log.w((String)TAG, (String)"SDL audio: error return from write(short)");
+                return;
+            }
+            try {
+                Thread.sleep((long)1L);
+            }
+            catch (InterruptedException interruptedException) {
+                continue;
+            }
+            break;
+        }
+        return;
+    }
+
     public static void captureClose() {
         if (mAudioRecord != null) {
             mAudioRecord.stop();
@@ -366,24 +171,244 @@ public class SDLAudioManager
         }
     }
 
-    /** This method is called by SDL using JNI. */
-    public static void audioSetThreadPriority(boolean iscapture, int device_id) {
-        try {
+    public static int[] captureOpen(int n, int n2, int n3, int n4) {
+        return SDLAudioManager.open(true, n, n2, n3, n4);
+    }
 
-            /* Set thread name */
-            if (iscapture) {
-                Thread.currentThread().setName("SDLAudioC" + device_id);
-            } else {
-                Thread.currentThread().setName("SDLAudioP" + device_id);
-            }
-
-            /* Set thread priority */
-            android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_AUDIO);
-
-        } catch (Exception e) {
-            Log.v(TAG, "modify thread properties failed " + e.toString());
+    /*
+     * Enabled force condition propagation
+     * Lifted jumps to return sites
+     */
+    public static int captureReadByteBuffer(byte[] arrby, boolean bl) {
+        int n;
+        if (Build.VERSION.SDK_INT < 23) {
+            return mAudioRecord.read(arrby, 0, arrby.length);
         }
+        AudioRecord audioRecord = mAudioRecord;
+        int n2 = arrby.length;
+        if (bl) {
+            n = 0;
+            do {
+                return audioRecord.read(arrby, 0, n2, n);
+                break;
+            } while (true);
+        }
+        n = 1;
+        return audioRecord.read(arrby, 0, n2, n);
+    }
+
+    /*
+     * Enabled force condition propagation
+     * Lifted jumps to return sites
+     */
+    public static int captureReadFloatBuffer(float[] arrf, boolean bl) {
+        int n;
+        AudioRecord audioRecord = mAudioRecord;
+        int n2 = arrf.length;
+        if (bl) {
+            n = 0;
+            do {
+                return audioRecord.read(arrf, 0, n2, n);
+                break;
+            } while (true);
+        }
+        n = 1;
+        return audioRecord.read(arrf, 0, n2, n);
+    }
+
+    /*
+     * Enabled force condition propagation
+     * Lifted jumps to return sites
+     */
+    public static int captureReadShortBuffer(short[] arrs, boolean bl) {
+        int n;
+        if (Build.VERSION.SDK_INT < 23) {
+            return mAudioRecord.read(arrs, 0, arrs.length);
+        }
+        AudioRecord audioRecord = mAudioRecord;
+        int n2 = arrs.length;
+        if (bl) {
+            n = 0;
+            do {
+                return audioRecord.read(arrs, 0, n2, n);
+                break;
+            } while (true);
+        }
+        n = 1;
+        return audioRecord.read(arrs, 0, n2, n);
+    }
+
+    protected static String getAudioFormatString(int n) {
+        switch (n) {
+            default: {
+                return Integer.toString((int)n);
+            }
+            case 3: {
+                return "8-bit";
+            }
+            case 2: {
+                return "16-bit";
+            }
+            case 4: 
+        }
+        return "float";
+    }
+
+    public static void initialize() {
+        mAudioTrack = null;
+        mAudioRecord = null;
     }
 
     public static native int nativeSetupJNI();
+
+    /*
+     * Unable to fully structure code
+     * Enabled aggressive block sorting
+     * Lifted jumps to return sites
+     */
+    protected static int[] open(boolean var0, int var1_1, int var2_2, int var3_3, int var4_4) {
+        var5_5 = new StringBuilder().append("Opening ");
+        var6_6 = var0 != false ? "capture" : "playback";
+        Log.v((String)"SDLAudio", (String)var5_5.append(var6_6).append(", requested ").append(var4_4).append(" frames of ").append(var3_3).append(" channel ").append(SDLAudioManager.getAudioFormatString(var2_2)).append(" audio at ").append(var1_1).append(" Hz").toString());
+        if (Build.VERSION.SDK_INT < 21) {
+            if (var3_3 > 2) {
+                var3_3 = 2;
+            }
+            if (var1_1 < 8000) {
+                var1_1 = 8000;
+            } else if (var1_1 > 48000) {
+                var1_1 = 48000;
+            }
+        }
+        if (var2_2 == 4 && Build.VERSION.SDK_INT < (var25_7 = var0 != false ? 23 : 21)) {
+            var2_2 = 2;
+        }
+        switch (var2_2) {
+            default: {
+                Log.v((String)"SDLAudio", (String)("Requested format " + var2_2 + ", getting ENCODING_PCM_16BIT"));
+                var2_2 = 2;
+                var8_8 = 2;
+                break;
+            }
+            case 3: {
+                var8_8 = 1;
+                break;
+            }
+            case 2: {
+                var8_8 = 2;
+                break;
+            }
+            case 4: {
+                var8_8 = 4;
+                break;
+            }
+        }
+        if (var0) {
+            switch (var3_3) {
+                default: {
+                    Log.v((String)"SDLAudio", (String)("Requested " + var3_3 + " channels, getting stereo"));
+                    var3_3 = 2;
+                    var10_9 = 12;
+                    break;
+                }
+                case 1: {
+                    var10_9 = 16;
+                    ** break;
+                }
+                case 2: {
+                    var10_9 = 12;
+                    ** break;
+lbl42: // 2 sources:
+                    break;
+                }
+            }
+        } else {
+            switch (var3_3) {
+                default: {
+                    Log.v((String)"SDLAudio", (String)("Requested " + var3_3 + " channels, getting stereo"));
+                    var3_3 = 2;
+                    var10_9 = 12;
+                    break;
+                }
+                case 1: {
+                    var10_9 = 4;
+                    break;
+                }
+                case 2: {
+                    var10_9 = 12;
+                    break;
+                }
+                case 3: {
+                    var10_9 = 28;
+                    break;
+                }
+                case 4: {
+                    var10_9 = 204;
+                    break;
+                }
+                case 5: {
+                    var10_9 = 220;
+                    break;
+                }
+                case 6: {
+                    var10_9 = 252;
+                    break;
+                }
+                case 7: {
+                    var10_9 = 1276;
+                    break;
+                }
+                case 8: {
+                    if (Build.VERSION.SDK_INT >= 23) {
+                        var10_9 = 6396;
+                        break;
+                    }
+                    Log.v((String)"SDLAudio", (String)("Requested " + var3_3 + " channels, getting 5.1 surround"));
+                    var3_3 = 6;
+                    var10_9 = 252;
+                }
+            }
+        }
+        var11_10 = var8_8 * var3_3;
+        var12_11 = var0 != false ? AudioRecord.getMinBufferSize((int)var1_1, (int)var10_9, (int)var2_2) : AudioTrack.getMinBufferSize((int)var1_1, (int)var10_9, (int)var2_2);
+        var13_12 = Math.max((int)var4_4, (int)((-1 + (var12_11 + var11_10)) / var11_10));
+        var14_13 = new int[4];
+        if (var0) {
+            if (SDLAudioManager.mAudioRecord == null) {
+                var20_14 = var13_12 * var11_10;
+                SDLAudioManager.mAudioRecord = new AudioRecord(0, var1_1, var10_9, var2_2, var20_14);
+                if (SDLAudioManager.mAudioRecord.getState() != 1) {
+                    Log.e((String)"SDLAudio", (String)"Failed during initialization of AudioRecord");
+                    SDLAudioManager.mAudioRecord.release();
+                    SDLAudioManager.mAudioRecord = null;
+                    return null;
+                }
+                SDLAudioManager.mAudioRecord.startRecording();
+            }
+            var14_13[0] = SDLAudioManager.mAudioRecord.getSampleRate();
+            var14_13[1] = SDLAudioManager.mAudioRecord.getAudioFormat();
+            var14_13[2] = SDLAudioManager.mAudioRecord.getChannelCount();
+        } else {
+            if (SDLAudioManager.mAudioTrack == null) {
+                var18_17 = var13_12 * var11_10;
+                SDLAudioManager.mAudioTrack = new AudioTrack(3, var1_1, var10_9, var2_2, var18_17, 1);
+                if (SDLAudioManager.mAudioTrack.getState() != 1) {
+                    Log.e((String)"SDLAudio", (String)"Failed during initialization of Audio Track");
+                    SDLAudioManager.mAudioTrack.release();
+                    SDLAudioManager.mAudioTrack = null;
+                    return null;
+                }
+                SDLAudioManager.mAudioTrack.play();
+            }
+            var14_13[0] = SDLAudioManager.mAudioTrack.getSampleRate();
+            var14_13[1] = SDLAudioManager.mAudioTrack.getAudioFormat();
+            var14_13[2] = SDLAudioManager.mAudioTrack.getChannelCount();
+        }
+        var14_13[3] = var13_12;
+        var15_15 = new StringBuilder().append("Opening ");
+        var16_16 = var0 != false ? "capture" : "playback";
+        Log.v((String)"SDLAudio", (String)var15_15.append(var16_16).append(", got ").append(var14_13[3]).append(" frames of ").append(var14_13[2]).append(" channel ").append(SDLAudioManager.getAudioFormatString(var14_13[1])).append(" audio at ").append(var14_13[0]).append(" Hz").toString());
+        return var14_13;
+    }
 }
+

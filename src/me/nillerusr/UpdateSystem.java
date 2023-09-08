@@ -1,71 +1,94 @@
+/*
+ * Decompiled with CFR 0.0.
+ * 
+ * Could not load the following classes:
+ *  android.content.ComponentName
+ *  android.content.Context
+ *  android.content.Intent
+ *  android.content.res.Resources
+ *  android.os.AsyncTask
+ *  java.io.BufferedReader
+ *  java.io.IOException
+ *  java.io.InputStream
+ *  java.io.InputStreamReader
+ *  java.io.Reader
+ *  java.lang.Class
+ *  java.lang.Exception
+ *  java.lang.Integer
+ *  java.lang.Object
+ *  java.lang.String
+ *  java.lang.StringBuilder
+ *  java.net.URL
+ *  java.net.URLConnection
+ */
 package me.nillerusr;
 
-import android.content.*;
-import java.io.*;
-import java.net.*;
-import com.valvesoftware.source32.R;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.Resources;
 import android.os.AsyncTask;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.io.InputStream;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import android.util.Log;
 import me.nillerusr.UpdateService;
 
-public class UpdateSystem extends AsyncTask<String, Integer, String> {
-	private static final String git_url = "https://raw.githubusercontent.com/nillerusr/srceng-deploy";
-	private static final String app = "srceng-debug.apk";
+public class UpdateSystem
+extends AsyncTask<String, Integer, String> {
+    private static final String app = "srceng-debug.apk";
+    private static final String git_url = "https://raw.githubusercontent.com/nillerusr/srceng-deploy";
+    String deploy_branch;
+    String last_commit;
+    Context mContext;
 
-	String deploy_branch, last_commit;
-	Context mContext;
+    public UpdateSystem(Context context) {
+        this.mContext = context;
+        this.deploy_branch = context.getResources().getString(2130968577);
+        this.last_commit = context.getResources().getString(2130968576);
+    }
 
-	public UpdateSystem( Context context )
-	{
-		mContext = context; // save application context
-		deploy_branch = context.getResources().getString(R.string.deploy_branch);
-		last_commit = context.getResources().getString(R.string.last_commit);
-	}
-
-	private static String toString(InputStream inputStream)
-	{
+    /*
+     * Enabled aggressive block sorting
+     * Enabled unnecessary exception pruning
+     * Enabled aggressive exception aggregation
+     */
+    private static String toString(InputStream inputStream) {
         try {
-			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"));
-			String inputLine;
-			StringBuilder stringBuilder = new StringBuilder();
-			while ((inputLine = bufferedReader.readLine()) != null) {
-				stringBuilder.append(inputLine);
-			}
-			return stringBuilder.toString();
+            String string2;
+            BufferedReader bufferedReader = new BufferedReader((Reader)new InputStreamReader(inputStream, "UTF-8"));
+            StringBuilder stringBuilder = new StringBuilder();
+            while ((string2 = bufferedReader.readLine()) != null) {
+                stringBuilder.append(string2);
+            }
+            return stringBuilder.toString();
         }
-		catch(Exception e) {
-			e.printStackTrace();
-		}
+        catch (Exception exception) {
+            exception.printStackTrace();
+            return "";
+        }
+    }
 
-		return "";
-	}
+    protected /* varargs */ String doInBackground(String ... arrstring) {
+        try {
+            String string2 = UpdateSystem.toString(new URL("https://raw.githubusercontent.com/nillerusr/srceng-deploy/" + this.deploy_branch + "/version").openConnection().getInputStream());
+            return string2;
+        }
+        catch (IOException iOException) {
+            iOException.printStackTrace();
+            return null;
+        }
+    }
 
-	@Override
-	protected String doInBackground(String... params) {
-		URL urlObject;
-		URLConnection urlConnection;
-
-		try {
-			urlObject = new URL(git_url+"/"+deploy_branch+"/version");
-			urlConnection = urlObject.openConnection();
-			return toString(urlConnection.getInputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return null;
-	}
-
-	protected void onPostExecute(String result) {
-		if( result != null && !result.equals("") && !last_commit.equals(result) ) {
-			Intent notif = new Intent(mContext, UpdateService.class);
-			notif.putExtra("update_url", git_url+"/"+deploy_branch+"/"+app);
-			mContext.startService(notif);
-		}
-	}
+    protected void onPostExecute(String string2) {
+        if (string2 != null && !string2.equals((Object)"") && !this.last_commit.equals((Object)string2)) {
+            Intent intent = new Intent(this.mContext, UpdateService.class);
+            intent.putExtra("update_url", "https://raw.githubusercontent.com/nillerusr/srceng-deploy/" + this.deploy_branch + "/" + app);
+            this.mContext.startService(intent);
+        }
+    }
 }
+
