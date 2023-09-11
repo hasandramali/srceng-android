@@ -23,8 +23,6 @@ generate_resources()
 
 generate_resources
 
-mkdir $HOME/.android
-cp debug.keystore $HOME/.android
 JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/ ANDROID_HOME=android-sdk/ ant debug || exit 1
 
 echo -n $COMMIT > version
