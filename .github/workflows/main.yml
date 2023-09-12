@@ -27,4 +27,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
           name: compiled-debug
-          path: bin/*
+          path: bin/srceng-debug.apk
