@@ -1,6 +1,6 @@
 package me.nillerusr;
 
-import com.valvesoftware.source32.R;
+import com.valvesoftware.tfport.R;
 
 import java.io.File;
 import java.io.FileWriter;

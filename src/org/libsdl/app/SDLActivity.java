@@ -1,6 +1,6 @@
 package org.libsdl.app;
 
-import com.valvesoftware.source32.R;
+import com.valvesoftware.tfport.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;

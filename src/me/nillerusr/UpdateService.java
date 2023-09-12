@@ -12,7 +12,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.widget.RemoteViews;
 
-import com.valvesoftware.source32.R;
+import com.valvesoftware.tfport.R;
 
 public class UpdateService extends Service {
 	NotificationManager nm;
