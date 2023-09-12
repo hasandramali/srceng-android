@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="hl_color">#fff79a10</color>
-    <color name="spin_color">#ff3f3f3f</color>
+	<color name="hl_color">#F79A10</color>
+	<color name="spin_color">#3F3F3F</color>
 </resources>
+
