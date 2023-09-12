@@ -1,305 +1,269 @@
+/*
+ * Decompiled with CFR 0.0.
+ * 
+ * Could not load the following classes:
+ *  android.app.Activity
+ *  android.app.Application
+ *  android.app.Dialog
+ *  android.content.Context
+ *  android.content.Intent
+ *  android.content.SharedPreferences
+ *  android.content.SharedPreferences$Editor
+ *  android.content.res.Resources
+ *  android.graphics.Typeface
+ *  android.graphics.drawable.Drawable
+ *  android.os.Build
+ *  android.os.Build$VERSION
+ *  android.os.Bundle
+ *  android.os.Environment
+ *  android.text.Editable
+ *  android.text.util.Linkify
+ *  android.util.Log
+ *  android.view.View
+ *  android.view.View$OnClickListener
+ *  android.view.ViewGroup
+ *  android.view.ViewGroup$LayoutParams
+ *  android.view.Window
+ *  android.widget.Button
+ *  android.widget.CheckBox
+ *  android.widget.EditText
+ *  android.widget.LinearLayout
+ *  android.widget.LinearLayout$LayoutParams
+ *  android.widget.ScrollView
+ *  android.widget.TextView
+ *  android.widget.Toast
+ *  java.io.File
+ *  java.lang.CharSequence
+ *  java.lang.Class
+ *  java.lang.Exception
+ *  java.lang.Integer
+ *  java.lang.Object
+ *  java.lang.String
+ *  java.util.ArrayList
+ */
 package me.nillerusr;
 
-import com.valvesoftware.source32.R;
-
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
-import android.Manifest;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.SystemClock;
-import android.os.Environment;
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.os.Handler;
+import android.app.Application;
 import android.app.Dialog;
-import android.content.DialogInterface;
-import java.lang.Thread;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.text.Editable;
 import android.text.util.Linkify;
 import android.util.Log;
-import android.widget.LinearLayout.LayoutParams;
-import android.view.*;
-import android.widget.*;
-import android.graphics.*;
-import android.graphics.drawable.*;
-import android.net.Uri;
-
-import me.nillerusr.UpdateService;
-import me.nillerusr.UpdateSystem;
-import me.nillerusr.ExtractAssets;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
+import java.io.File;
+import java.util.ArrayList;
 import me.nillerusr.DirchActivity;
-
 import org.libsdl.app.SDLActivity;
 
-public class LauncherActivity extends Activity {
-	public static String PKG_NAME;
+public class LauncherActivity
+extends Activity {
+    static EditText EnvEdit;
+    static EditText GamePath;
+    public static String PKG_NAME;
+    static final int REQUEST_PERMISSIONS = 42;
+    public static boolean can_write;
+    static CheckBox check_updates;
+    static EditText cmdArgs;
+    static EditText res_height;
+    static EditText res_width;
+    public static final int sdk;
+    static CheckBox useVolumeButtons;
+    public SharedPreferences mPref;
 
-	public static boolean can_write = true;
-	static EditText cmdArgs, GamePath = null, EnvEdit, res_width, res_height;
-	public SharedPreferences mPref;
-	public static final int sdk = Integer.valueOf(Build.VERSION.SDK).intValue();
-	static CheckBox useVolumeButtons, check_updates;
+    static {
+        can_write = true;
+        GamePath = null;
+        sdk = Integer.valueOf((String)Build.VERSION.SDK);
+    }
 
-	final static int REQUEST_PERMISSIONS = 42;
+    /*
+     * Enabled aggressive block sorting
+     * Enabled unnecessary exception pruning
+     * Enabled aggressive exception aggregation
+     */
+    public static void changeButtonsStyle(ViewGroup viewGroup) {
+        if (sdk < 21) {
+            for (int i = -1 + viewGroup.getChildCount(); i >= 0; --i) {
+                try {
+                    View view = viewGroup.getChildAt(i);
+                    if (view == null) continue;
+                    if (view instanceof ViewGroup) {
+                        LauncherActivity.changeButtonsStyle((ViewGroup)view);
+                        continue;
+                    }
+                    if (view instanceof Button) {
+                        Button button = (Button)view;
+                        Drawable drawable2 = button.getBackground();
+                        if (drawable2 != null) {
+                            drawable2.setAlpha(96);
+                        }
+                        button.setTextColor(-1);
+                        button.setTextSize(15.0f);
+                        button.setTypeface(button.getTypeface(), 1);
+                        continue;
+                    }
+                    if (!(view instanceof EditText)) continue;
+                    EditText editText = (EditText)view;
+                    editText.setBackgroundColor(-14211289);
+                    editText.setTextColor(-1);
+                    editText.setTextSize(15.0f);
+                    continue;
+                }
+                catch (Exception exception) {}
+            }
+        }
+    }
 
-	public void applyPermissions( final String permissions[], final int code ) {
-		List<String> requestPermissions = new ArrayList<String>();
-		for( int i = 0; i < permissions.length; i++ ) {
-			if( checkSelfPermission(permissions[i]) != PackageManager.PERMISSION_GRANTED )
-				requestPermissions.add(permissions[i]);
-		}
+    public static String getAndroidDataDir() {
+        String string2 = LauncherActivity.getDefaultDir() + "/Android/data/" + PKG_NAME + "/files";
+        File file = new File(string2);
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        return string2;
+    }
 
-		if( !requestPermissions.isEmpty() ) {
-			String[] requestPermissionsArray = new String[requestPermissions.size()];
-			for( int i = 0; i < requestPermissions.size(); i++ )
-				requestPermissionsArray[i] = requestPermissions.get(i);
-			requestPermissions(requestPermissionsArray, code);
-		}
-	}
+    public static String getDefaultDir() {
+        File file = Environment.getExternalStorageDirectory();
+        if (file == null || !file.exists()) {
+            return "/sdcard/";
+        }
+        return file.getPath();
+    }
 
-	public void onRequestPermissionsResult( int requestCode,  String[] permissions,  int[] grantResults ) {
-		if( requestCode == REQUEST_PERMISSIONS ) {
-			if( grantResults[0] == PackageManager.PERMISSION_DENIED ) {
-				Toast.makeText( this, R.string.srceng_launcher_error_no_permission, Toast.LENGTH_LONG ).show();
-				finish();
-			}
-		}
-	}
+    public void applyPermissions(String[] arrstring, int n) {
+        ArrayList arrayList = new ArrayList();
+        for (int i = 0; i < arrstring.length; ++i) {
+            if (this.checkSelfPermission(arrstring[i]) == 0) continue;
+            arrayList.add((Object)arrstring[i]);
+        }
+        if (!arrayList.isEmpty()) {
+            String[] arrstring2 = new String[arrayList.size()];
+            for (int i = 0; i < arrayList.size(); ++i) {
+                arrstring2[i] = (String)arrayList.get(i);
+            }
+            this.requestPermissions(arrstring2, n);
+        }
+    }
 
-	public static String getDefaultDir() {
-		File dir = Environment.getExternalStorageDirectory();
-		if (dir == null || !dir.exists())
-			return "/sdcard/";
-		return dir.getPath();
-	}
+    /*
+     * Enabled aggressive block sorting
+     */
+    public void onCreate(Bundle bundle) {
+        super.onCreate(bundle);
+        PKG_NAME = this.getApplication().getPackageName();
+        this.requestWindowFeature(1);
+        if (sdk >= 21) {
+            super.setTheme(16974372);
+        } else {
+            super.setTheme(16973829);
+        }
+        this.mPref = this.getSharedPreferences("mod", 0);
+        this.setContentView(2130903041);
+        (LinearLayout)this.findViewById(2131099659);
+        cmdArgs = (EditText)this.findViewById(2131099660);
+        EnvEdit = (EditText)this.findViewById(2131099661);
+        GamePath = (EditText)this.findViewById(2131099662);
+        ((Button)this.findViewById(2131099657)).setOnClickListener(new View.OnClickListener(){
 
-	public static String getAndroidDataDir() {
-		String path = getDefaultDir() + "/Android/data/" + PKG_NAME + "/files";
-		File directory = new File(path);
-		if (!directory.exists())
-			directory.mkdirs();
-		return path;
-	}
+            public void onClick(View view) {
+                LauncherActivity.this.startSource(view);
+            }
+        });
+        ((Button)this.findViewById(2131099656)).setOnClickListener(new View.OnClickListener(){
 
-	public static void changeButtonsStyle( ViewGroup parent )
-	{
-		if( sdk >= 21 )
-			return;
+            public void onClick(View view) {
+                Dialog dialog = new Dialog((Context)LauncherActivity.this);
+                dialog.setTitle(2130968578);
+                ScrollView scrollView = new ScrollView((Context)LauncherActivity.this);
+                scrollView.setLayoutParams((ViewGroup.LayoutParams)new LinearLayout.LayoutParams(-1, -1));
+                scrollView.setPadding(5, 5, 5, 5);
+                TextView textView = new TextView((Context)LauncherActivity.this);
+                textView.setText(2130968579);
+                textView.setLinksClickable(true);
+                textView.setTextIsSelectable(true);
+                Linkify.addLinks((TextView)textView, (int)3);
+                scrollView.addView((View)textView);
+                dialog.setContentView((View)scrollView);
+                dialog.show();
+            }
+        });
+        ((Button)this.findViewById(2131099663)).setOnClickListener(new View.OnClickListener(){
 
-		for( int i = parent.getChildCount() - 1; i >= 0; i-- )
-		{
-			try
-			{
-				final View child = parent.getChildAt(i);
+            public void onClick(View view) {
+                Intent intent = new Intent((Context)LauncherActivity.this, DirchActivity.class);
+                intent.addFlags(268435456);
+                LauncherActivity.this.startActivity(intent);
+            }
+        });
+        this.getResources().getString(2130968576);
+        cmdArgs.setText((CharSequence)this.mPref.getString("argv", "-console"));
+        GamePath.setText((CharSequence)this.mPref.getString("gamepath", LauncherActivity.getDefaultDir() + "/srceng"));
+        EnvEdit.setText((CharSequence)this.mPref.getString("env", "LIBGL_USEVBO=0"));
+        LauncherActivity.changeButtonsStyle((ViewGroup)this.getWindow().getDecorView());
+        if (sdk >= 23) {
+            this.applyPermissions(new String[]{"android.permission.WRITE_EXTERNAL_STORAGE", "android.permission.RECORD_AUDIO"}, 42);
+        }
+    }
 
-				if( child == null )
-					continue;
+    public void onPause() {
+        Log.v((String)"SRCAPK", (String)"onPause");
+        this.saveSettings(this.mPref.edit());
+        super.onPause();
+    }
 
-				if( child instanceof ViewGroup )
-				{
-					changeButtonsStyle((ViewGroup) child);
-					// DO SOMETHING WITH VIEWGROUP, AFTER CHILDREN HAS BEEN LOOPED
-				}
-				else if( child instanceof Button )
-				{
-					final Button b = (Button)child;
-					final Drawable bg = b.getBackground();
-					if(bg!= null)bg.setAlpha( 96 );
-					b.setTextColor( 0xFFFFFFFF );
-					b.setTextSize( 15f );
-					//b.setText(b.getText().toString().toUpperCase());
-					b.setTypeface( b.getTypeface(),Typeface.BOLD );
-				}
-				else if( child instanceof EditText )
-				{
-					final EditText b = ( EditText )child;
-					b.setBackgroundColor( 0xFF272727 );
-					b.setTextColor( 0xFFFFFFFF );
-					b.setTextSize( 15f );
-				}
-			}
-			catch( Exception e )
-			{
-			}
-		}
-	}
+    public void onRequestPermissionsResult(int n, String[] arrstring, int[] arrn) {
+        if (n == 42 && arrn[0] == -1) {
+            Toast.makeText((Context)this, (int)2130968587, (int)1).show();
+            this.finish();
+        }
+    }
 
+    public void saveSettings(SharedPreferences.Editor editor) {
+        String string2 = cmdArgs.getText().toString();
+        String string3 = GamePath.getText().toString();
+        String string4 = EnvEdit.getText().toString();
+        editor.putString("argv", string2);
+        editor.putString("gamepath", string3);
+        editor.putString("env", string4);
+        editor.commit();
+    }
 
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		PKG_NAME = getApplication().getPackageName();
-		requestWindowFeature(1);
+    /*
+     * Enabled aggressive block sorting
+     */
+    public void startSource(View view) {
+        GamePath.getText().toString();
+        SharedPreferences.Editor editor = this.mPref.edit();
+        this.saveSettings(editor);
+        if (sdk >= 19) {
+            editor.putBoolean("immersive_mode", true);
+        } else {
+            editor.putBoolean("immersive_mode", false);
+        }
+        editor.commit();
+        Intent intent = new Intent((Context)this, SDLActivity.class);
+        intent.addFlags(268435456);
+        this.startActivity(intent);
+    }
 
-		if (sdk >= 21)
-			super.setTheme(0x01030224);
-		else
-			super.setTheme(0x01030005);
-
-		mPref = getSharedPreferences("mod", 0);
-
-		setContentView(R.layout.activity_launcher);
-
-		LinearLayout body = (LinearLayout)findViewById(R.id.body);
-
-		cmdArgs = (EditText)findViewById(R.id.edit_cmdline);
-		EnvEdit = (EditText)findViewById(R.id.edit_env);
-		GamePath = (EditText)findViewById(R.id.edit_gamepath);
-
-//		immersiveMode = (CheckBox)findViewById(R.id.checkbox_immersive_mode);
-
-/*		useVolumeButtons = (CheckBox)findViewById(R.id.checkbox_use_volume);
-
-		useVolumeButtons.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			@Override
-			public void onCheckedChanged(CompoundButton buttonView,boolean isChecked) {
-				if( isChecked )
-					Toast.makeText(LauncherActivity.this, R.string.srceng_launcher_volume_buttons_desc, 5000).show();
-			}
-		});*/
-
-		Button button = (Button)findViewById(R.id.button_launch);
-		button.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				LauncherActivity.this.startSource(v);
-			}
-		});
-
-		Button aboutButton = (Button) findViewById(R.id.button_about);
-		aboutButton.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				Dialog dialog = new Dialog(LauncherActivity.this);
-				dialog.setTitle(R.string.srceng_launcher_about);
-				ScrollView scroll = new ScrollView(LauncherActivity.this);
-				scroll.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
-				scroll.setPadding(5,5,5,5);
-				TextView text = new TextView(LauncherActivity.this);
-				text.setText(R.string.srceng_launcher_about_text);
-				text.setLinksClickable(true);
-				text.setTextIsSelectable(true);
-				Linkify.addLinks(text, Linkify.WEB_URLS|Linkify.EMAIL_ADDRESSES);
-				scroll.addView(text);
-				dialog.setContentView(scroll);
-				dialog.show();
-			}
-		});
-
-		Button dirButton = findViewById(R.id.button_gamedir);
-		dirButton.setOnClickListener(new View.OnClickListener() {
-			public void onClick(View v) {
-				Intent intent = new Intent(LauncherActivity.this, DirchActivity.class);
-				intent.addFlags(268435456);
-				startActivity(intent);
-			}
-		});
-
-/*		if (sdk >= 19) {
-			immersiveMode.setChecked(true);
-		}*/
-
-//		check_updates = (CheckBox)findViewById(R.id.checkbox_check_updates);
-		String last_commit = getResources().getString(R.string.last_commit);
-
-		cmdArgs.setText(mPref.getString("argv", "-console"));
-		GamePath.setText(mPref.getString("gamepath", getDefaultDir() + "/srceng"));
-		EnvEdit.setText(mPref.getString("env", "LIBGL_USEVBO=0"));
-
-//		useVolumeButtons.setChecked(mPref.getBoolean("use_volume_buttons", false));
-//		check_updates.setChecked(mPref.getBoolean("check_updates", true));
-
-		changeButtonsStyle((ViewGroup)this.getWindow().getDecorView());
-
-		// permissions check
-		if( sdk >= 23 )
-			applyPermissions( new String[] { Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.RECORD_AUDIO }, REQUEST_PERMISSIONS );
-/*
-		if( last_commit == null || last_commit.isEmpty() )
-			check_updates.setVisibility(View.GONE);
-		else if( check_updates.isChecked() ) {
-			UpdateSystem update = new UpdateSystem(this);
-			update.execute();
-		}
-*/
-	}
-
-	public void saveSettings(SharedPreferences.Editor editor)
-	{
-		String argv = cmdArgs.getText().toString();
-		String gamepath = GamePath.getText().toString();
-		String env = EnvEdit.getText().toString();
-
-		editor.putString("argv", argv);
-		editor.putString("gamepath", gamepath);
-		editor.putString("env", env);
-//		editor.putBoolean("use_volume_buttons", useVolumeButtons.isChecked());
-//		editor.putBoolean("check_updates", check_updates.isChecked());
-		editor.commit();
-	}
-
-	public void startSource(View view)
-	{
-		String gamepath = GamePath.getText().toString();
-
-		SharedPreferences.Editor editor = mPref.edit();
-		saveSettings(editor);
-
-//		boolean rodir = mPref.getBoolean("rodir", false);
-//		boolean can_write = writeTest(gamepath);
-
-		if (sdk >= 19)
-			editor.putBoolean("immersive_mode", true /*immersiveMode.isChecked()*/ );
-		else
-			editor.putBoolean("immersive_mode", false);
-
-		editor.commit();
-
-		Intent intent = new Intent(LauncherActivity.this, SDLActivity.class);
-		intent.addFlags(268435456);
-		startActivity(intent);
-
-
-/*		if (can_write || rodir) {
-			if (can_write) {
-				editor.putBoolean("rodir", false);
-				editor.commit();
-				rodir = false;
-			}
-
-			if (sdk >= 19)
-				editor.putBoolean("immersive_mode", true ); //immersiveMode.isChecked() );
-			else
-				editor.putBoolean("immersive_mode", false);
-
-			editor.commit();
-
-			Intent intent = new Intent(this, SDLActivity.class);
-			intent.addFlags(268435456);
-			startActivity(intent);
-
-			return;
-		}
-
-		new AlertDialog.Builder(this).setTitle("Warning").setMessage(
-			this.getResources().getString(R.string.srceng_launcher_error_test_write) + getAndroidDataDir()
-		).setPositiveButton(R.string.srceng_launcher_ok, (DialogInterface.OnClickListener) null).show();
-
-		editor.putBoolean("rodir", true);
-		editor.commit();
-*/
-	}
-
-	public void onPause()
-	{
-		Log.v("SRCAPK", "onPause");
-		saveSettings(mPref.edit());
-		super.onPause();
-	}
 }
 

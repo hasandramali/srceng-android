@@ -14,11 +14,11 @@
 				<ScrollView android:layout_width="-1" android:layout_height="-1" android:fillViewport="true">
 					<LinearLayout android:orientation="1" android:id="false" android:background="ff313131" android:layout_width="-1" android:layout_height="-1">
 						<TextView android:textAppearance="{2:16842817}" android:layout_width="-1" android:layout_height="-2" android:layout_marginLeft="5dp" android:text="Command-line arguments" />
-						<EditText android:id="false" android:layout_width="-1" android:layout_height="-2" android:layout_marginLeft="3dp" android:layout_marginTop="5dp" android:layout_marginRight="3dp" android:layout_marginBottom="5dp" android:text="-console" android:maxLines="1" android:inputType="0x1" />
+						<EditText android:id="false" android:layout_width="-1" android:layout_height="-2" android:layout_marginLeft="3dp" android:layout_marginTop="5dp" android:layout_marginRight="3dp" android:layout_marginBottom="5dp" android:text="-console" android:maxLines="1" android:inputType="0x1" android:backgroundTint="f79a10" />
 						<TextView android:textAppearance="{2:16842817}" android:layout_width="-1" android:layout_height="-2" android:layout_marginLeft="5dp" android:text="Env" />
-						<EditText android:id="false" android:layout_width="-1" android:layout_height="-2" android:layout_marginLeft="3dp" android:layout_marginTop="5dp" android:layout_marginRight="3dp" android:layout_marginBottom="5dp" android:text="LIBGL_USEVBO=0" android:maxLines="1" android:inputType="0x1" />
+						<EditText android:id="false" android:layout_width="-1" android:layout_height="-2" android:layout_marginLeft="3dp" android:layout_marginTop="5dp" android:layout_marginRight="3dp" android:layout_marginBottom="5dp" android:text="LIBGL_USEVBO=0" android:maxLines="1" android:inputType="0x1" android:backgroundTint="f79a10" />
 						<TextView android:textAppearance="{2:16842817}" android:layout_width="-1" android:layout_height="-2" android:layout_marginLeft="5dp" android:text="Path to game resources" />
-						<EditText android:id="false" android:layout_width="-1" android:layout_height="-2" android:layout_marginLeft="3dp" android:layout_marginTop="5dp" android:layout_marginRight="3dp" android:layout_marginBottom="5dp" android:text="/sdcard/srceng/" android:maxLines="1" android:inputType="0x1" />
+						<EditText android:id="false" android:layout_width="-1" android:layout_height="-2" android:layout_marginLeft="3dp" android:layout_marginTop="5dp" android:layout_marginRight="3dp" android:layout_marginBottom="5dp" android:text="/sdcard/srceng/" android:maxLines="1" android:inputType="0x1" android:backgroundTint="f79a10" />
 						<Button android:textColor="ffffff" android:id="false" android:layout_width="-1" android:layout_height="-2" android:layout_marginLeft="3dp" android:layout_marginTop="5dp" android:layout_marginRight="3dp" android:layout_marginBottom="5dp" android:text="Set game directory" />
 					</LinearLayout>
 				</ScrollView>
