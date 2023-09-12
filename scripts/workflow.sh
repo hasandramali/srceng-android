@@ -6,7 +6,7 @@ build()
 {
 	PW=$(pwd)
 	cd $1
-	make NDK=1 NDK_PATH=$NDK_HOME APP_API_LEVEL=19 CFG=release NDK_VERBOSE=0 -j$(nproc --all) || exit 1
+	make NDK=1 NDK_PATH=$NDK_HOME APP_API_LEVEL=19 CFG=debug NDK_VERBOSE=0 -j$(nproc --all) || exit 1
 	cp $2 $LIBPATH && echo $2 Installed || exit 1
 	cd $PW
 }
@@ -25,6 +25,6 @@ generate_resources
 
 mkdir $HOME/.android
 cp debug.keystore $HOME/.android
-JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/ ANDROID_HOME=android-sdk/ ant release || exit 1
+JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/ ANDROID_HOME=android-sdk/ ant debug || exit 1
 
 echo -n $COMMIT > version
