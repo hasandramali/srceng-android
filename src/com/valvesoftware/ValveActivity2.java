@@ -1,140 +1,123 @@
-/*
- * Decompiled with CFR 0.0.
- * 
- * Could not load the following classes:
- *  android.app.Activity
- *  android.content.Context
- *  android.content.Intent
- *  android.content.SharedPreferences
- *  android.content.pm.ApplicationInfo
- *  android.util.Log
- *  java.io.File
- *  java.lang.Object
- *  java.lang.String
- *  java.util.Locale
- */
 package com.valvesoftware;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
-import android.util.Log;
+import android.graphics.Point;
+import android.os.Bundle;
+import android.view.Display;
+import java.util.HashMap;
 import java.io.File;
 import java.util.Locale;
-import me.nillerusr.ExtractAssets;
+import org.libsdl.app.SDLActivity;
 import me.nillerusr.LauncherActivity;
+import android.content.SharedPreferences;
+import android.content.Context;
+import android.util.Log;
+import me.nillerusr.ExtractAssets;
 
-public class ValveActivity2 {
-    public static SharedPreferences mPref;
-    private static Activity mSingleton;
+public class ValveActivity2 { // not activity, i am lazy to change native methods
+	private static Activity mSingleton;
+	public static SharedPreferences mPref;
 
-    /*
-     * Enabled aggressive block sorting
-     */
-    public static int findGameinfo(String string2) {
-        boolean bl;
-        block8 : {
-            block7 : {
-                File file = new File(string2);
-                bl = false;
-                boolean bl2 = false;
-                if (!file.isDirectory()) break block7;
-                for (File file2 : file.listFiles()) {
-                    if (file2.isDirectory()) {
-                        File[] arrfile = file2.listFiles();
-                        int n = arrfile.length;
-                        for (int i = 0; i < n; ++i) {
-                            if (!arrfile[i].getName().toLowerCase().equals((Object)"gameinfo.txt")) continue;
-                            bl2 = true;
-                        }
-                    }
-                    if (!file2.getName().toLowerCase().equals((Object)"platform")) continue;
-                    bl = true;
-                }
-                if (bl2) break block8;
-            }
-            return 0;
-        }
-        if (!bl) {
-            return -1;
-        }
-        return 1;
-    }
 
-    /*
-     * Enabled aggressive block sorting
-     */
-    public static void initNatives(Context context, Intent intent) {
-        mPref = context.getSharedPreferences("mod", 0);
-        ApplicationInfo applicationInfo = context.getApplicationInfo();
-        String string2 = mPref.getString("gamepath", LauncherActivity.getDefaultDir() + "/srceng");
-        String string3 = intent.getStringExtra("argv");
-        String string4 = intent.getStringExtra("gamedir");
-        String string5 = intent.getStringExtra("gamelibdir");
-        String string6 = intent.getStringExtra("vpk");
-        Log.v((String)"SRCAPK", (String)("argv=" + string3));
-        if (string4 == null || string4.isEmpty()) {
-            string4 = "hl2";
-        }
-        if (string3 == null || string3.isEmpty()) {
-            string3 = mPref.getString("argv", "-console");
-        }
-        String string7 = "-game " + string4 + " " + string3;
-        if (string5 != null && !string5.isEmpty()) {
-            ValveActivity2.setenv("APP_MOD_LIB", string5, 1);
-        }
-        ExtractAssets.extractAssets(context);
-        String string8 = context.getFilesDir().getPath() + "/" + "extras_dir.vpk";
-        if (string6 != null && !string6.isEmpty()) {
-            string8 = string6 + "," + string8;
-        }
-        Log.v((String)"SRCAPK", (String)("vpks=" + string8));
-        ValveActivity2.setenv("EXTRAS_VPK_PATH", string8, 1);
-        ValveActivity2.setenv("LANG", Locale.getDefault().toString(), 1);
-        ValveActivity2.setenv("APP_DATA_PATH", applicationInfo.dataDir, 1);
-        ValveActivity2.setenv("APP_LIB_PATH", applicationInfo.nativeLibraryDir, 1);
-        if (mPref.getBoolean("rodir", false)) {
-            ValveActivity2.setenv("VALVE_GAME_PATH", LauncherActivity.getAndroidDataDir(), 1);
-        } else {
-            ValveActivity2.setenv("VALVE_GAME_PATH", string2, 1);
-        }
-        Log.v((String)"SRCAPK", (String)("argv=" + string7));
-        ValveActivity2.setArgs(string7);
-    }
+	public static native void setArgs(String args);
+	public static native int setenv(String name, String value, int overwrite);
+	private static native void nativeOnActivityResult(Activity activity, int i, int i2, Intent intent);
 
-    /*
-     * Enabled aggressive block sorting
-     */
-    public static boolean isModGameinfoExists(String string2) {
-        File file = new File(string2);
-        if (file.isDirectory()) {
-            for (File file2 : file.listFiles()) {
-                if (!file2.isFile() || !file2.getName().toLowerCase().equals((Object)"gameinfo.txt")) continue;
-                return true;
-            }
-        }
-        return false;
-    }
+	public static boolean findGameinfo(String path)
+	{
+		File dir = new File(path);
+		if( !dir.isDirectory() )
+			return false;
 
-    private static native void nativeOnActivityResult(Activity var0, int var1, int var2, Intent var3);
+		for( File file : dir.listFiles() )
+		{
+			if( file.isDirectory() )
+			{
+				for( File f : file.listFiles() )
+				{
+					if( f.getName().toLowerCase().equals("gameinfo.txt") )
+						return true;
+				}
+			}
+		}
 
-    public static int preInit(Context context, Intent intent) {
-        mPref = context.getSharedPreferences("mod", 0);
-        String string2 = mPref.getString("gamepath", LauncherActivity.getDefaultDir() + "/srceng");
-        String string3 = intent.getStringExtra("gamedir");
-        if (string3 == null || string3.isEmpty()) {
-            string3 = "hl2";
-        }
-        if (!ValveActivity2.isModGameinfoExists(string2 + "/" + string3)) {
-            return 0;
-        }
-        return ValveActivity2.findGameinfo(string2);
-    }
+		return false;
+	}
 
-    public static native void setArgs(String var0);
+	static public boolean isModGameinfoExists(String path)
+	{
+		File dir = new File(path);
+		if( !dir.isDirectory() )
+			return false;
 
-    public static native int setenv(String var0, String var1, int var2);
+		for( File file : dir.listFiles() )
+		{
+			if( file.isFile() && file.getName().toLowerCase().equals("gameinfo.txt") )
+				return true;
+		}
+
+		return false;
+	}
+
+	static public boolean preInit(Context context, Intent intent)
+	{
+		mPref = context.getSharedPreferences("mod", 0);
+		String gamepath = mPref.getString("gamepath", LauncherActivity.getDefaultDir() + "/srceng");
+		String gamedir = intent.getStringExtra("gamedir");
+		if( gamedir == null || gamedir.isEmpty() )
+			gamedir = "hl2";
+
+		if( !findGameinfo(gamepath) || !isModGameinfoExists(gamepath+"/"+gamedir) )
+			return false;
+
+		return true;
+	}
+
+	static public void initNatives(Context context, Intent intent) {
+		mPref = context.getSharedPreferences("mod", 0);
+		ApplicationInfo appinf = context.getApplicationInfo();
+		String gamepath = mPref.getString("gamepath", LauncherActivity.getDefaultDir() + "/srceng");
+
+		String argv = intent.getStringExtra("argv");
+		String gamedir = intent.getStringExtra("gamedir");
+		String gamelibdir = intent.getStringExtra("gamelibdir");
+		String customVPK = intent.getStringExtra("vpk");
+		Log.v("SRCAPK", "argv="+argv);
+
+		if( gamedir == null || gamedir.isEmpty() )
+			gamedir = "hl2";
+
+		if( argv == null || argv.isEmpty() )
+			argv = mPref.getString("argv", "-console");
+
+		argv = "-game "+gamedir+" "+argv;
+
+		if( gamelibdir != null && !gamelibdir.isEmpty() )
+			setenv( "APP_MOD_LIB", gamelibdir, 1 );
+
+		ExtractAssets.extractVPK(context, false);
+
+		String vpks = context.getFilesDir().getPath()+"/"+ExtractAssets.VPK_NAME;
+		if( customVPK != null && !customVPK.isEmpty() )
+			vpks = customVPK+","+vpks;
+
+		Log.v("SRCAPK", "vpks="+vpks);
+
+		setenv( "EXTRAS_VPK_PATH", vpks, 1 );
+		setenv( "LANG", Locale.getDefault().toString(), 1 );
+		setenv( "APP_DATA_PATH", appinf.dataDir, 1);
+		setenv( "APP_LIB_PATH", appinf.nativeLibraryDir, 1);
+
+		if (mPref.getBoolean("rodir", false))
+			setenv( "VALVE_GAME_PATH", LauncherActivity.getAndroidDataDir(), 1 );
+		else
+			setenv( "VALVE_GAME_PATH", gamepath, 1 );
+
+		Log.v("SRCAPK", "argv="+argv);
+		setArgs(argv);
+	}
 }
-
