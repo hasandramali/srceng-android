@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <public type="drawable" name="folder" id="0x7f020000" />
-    <public type="drawable" name="ic_launcher" id="0x7f020001" />
     <public type="layout" name="activity_directory_choice" id="0x7f030000" />
     <public type="layout" name="activity_launcher" id="0x7f030001" />
     <public type="layout" name="directory" id="0x7f030002" />
