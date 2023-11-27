@@ -16,7 +16,7 @@ jobs:
         git clone --depth 1 https://gitlab.com/LostGamer/ndk-binaries
         git clone --depth 1 https://gitlab.com/LostGamer/android-sdk
         mkdir libs && cd libs/
-        wget https://github.com/hasandramali/srceng-android/releases/download/v1.0/hl2libs.tar.gz
+        wget https://github.com/hasandramali/tf2launcher-android/releases/download/v1.0/hl2libs.tar.gz
         tar -xf hl2libs.tar.gz
         rm -rf hl2libs.tar.gz
         cd ../
